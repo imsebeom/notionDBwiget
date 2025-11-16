@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="@android:color/white">
+
+    <!-- 위젯 헤더 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#F7F6F3">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Notion Pages"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000" />
+
+        <TextView
+            android:id="@+id/widget_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="14sp"
+            android:textColor="#666666" />
+    </LinearLayout>
+
+    <!-- 페이지 목록 -->
+    <ListView
+        android:id="@+id/widget_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="#E0E0E0"
+        android:dividerHeight="1dp" />
+
+</LinearLayout>
