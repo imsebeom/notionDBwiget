@@ -453,7 +453,7 @@ class _WidgetConfigScreenState extends State<WidgetConfigScreen> {
           
           if (_databaseProperties != null && _databaseProperties!.isNotEmpty)
             DropdownButtonFormField<String>(
-              value: _filterPropertyName,
+              initialValue: _filterPropertyName,
               decoration: const InputDecoration(
                 labelText: 'Filter by property',
                 border: OutlineInputBorder(),
@@ -554,7 +554,7 @@ class _WidgetConfigScreenState extends State<WidgetConfigScreen> {
           const SizedBox(height: 12),
           
           DropdownButtonFormField<String>(
-            value: _sortBy,
+            initialValue: _sortBy,
             decoration: const InputDecoration(
               labelText: 'Sort by',
               border: OutlineInputBorder(),
