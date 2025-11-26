@@ -1,31 +1,32 @@
 import 'package:flutter/material.dart';
-import '../models/notion_database.dart';
+import '../models/notion_view.dart';
 import '../services/notion_api_service.dart';
 import '../services/token_storage_service.dart';
 
-/// 노션 데이터베이스 선택 화면
-class DatabaseSelectScreen extends StatefulWidget {
-  const DatabaseSelectScreen({super.key});
+/// Notion 데이터베이스 View 선택 화면
+class ViewSelectScreen extends StatefulWidget {
+  const ViewSelectScreen({super.key});
 
   @override
-  State<DatabaseSelectScreen> createState() => _DatabaseSelectScreenState();
+  State<ViewSelectScreen> createState() => _ViewSelectScreenState();
 }
 
-class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
+class _ViewSelectScreenState extends State<ViewSelectScreen> {
   final TokenStorageService _tokenStorage = TokenStorageService();
   
-  List<NotionDatabase> _databases = [];
+  List<NotionView> _views = [];
   bool _isLoading = true;
   String? _error;
+  String _databaseTitle = '';
 
   @override
   void initState() {
     super.initState();
-    _loadDatabases();
+    _loadViews();
   }
 
-  /// 데이터베이스 목록 불러오기
-  Future<void> _loadDatabases() async {
+  /// View 목록 불러오기
+  Future<void> _loadViews() async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -33,81 +34,61 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
 
     try {
       final accessToken = await _tokenStorage.getAccessToken();
+      final databaseId = await _tokenStorage.getDatabaseId();
+      final databaseTitle = await _tokenStorage.getDatabaseTitle();
       
-      if (accessToken == null) {
+      if (accessToken == null || databaseId == null) {
         setState(() {
-          _error = 'No access token found';
+          _error = 'No access token or database found';
           _isLoading = false;
         });
         return;
       }
 
+      setState(() {
+        _databaseTitle = databaseTitle ?? 'Unknown Database';
+      });
+
       final apiService = NotionApiService(accessToken: accessToken);
-      final databases = await apiService.searchDatabases();
+      final views = await apiService.getDatabaseViews(databaseId);
 
       setState(() {
-        _databases = databases;
+        _views = views;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _error = 'Failed to load databases: $e';
+        _error = 'Failed to load views: $e';
         _isLoading = false;
       });
     }
   }
 
-  /// 데이터베이스 선택 처리
-  Future<void> _selectDatabase(NotionDatabase database) async {
+  /// View 선택 처리
+  Future<void> _selectView(NotionView view) async {
     try {
-      await _tokenStorage.saveDatabaseId(database.id);
-      await _tokenStorage.saveDatabaseTitle(database.title);
+      await _tokenStorage.saveViewId(view.id);
+      await _tokenStorage.saveViewName(view.name);
 
       if (!mounted) return;
 
-      // View 선택 화면으로 이동
-      Navigator.of(context).pushReplacementNamed('/view-select');
+      // 홈 화면으로 이동
+      Navigator.of(context).pushReplacementNamed('/home');
     } catch (e) {
       if (!mounted) return;
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to select database: $e'),
+          content: Text('Failed to select view: $e'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
 
-  /// 로그아웃 처리
-  Future<void> _logout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _tokenStorage.clearAll();
-      
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/login');
-    }
+  /// 뒤로 가기 (데이터베이스 재선택)
+  void _goBack() {
+    Navigator.of(context).pushReplacementNamed('/database-select');
   }
 
   @override
@@ -115,16 +96,13 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Select Database'),
+        title: const Text('Select View'),
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-            tooltip: 'Logout',
-          ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _goBack,
+        ),
       ),
       body: _buildBody(),
     );
@@ -139,7 +117,7 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
             CircularProgressIndicator(),
             SizedBox(height: 16),
             Text(
-              'Loading databases...',
+              'Loading views...',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -170,7 +148,7 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _loadDatabases,
+                onPressed: _loadViews,
                 child: const Text('Retry'),
               ),
             ],
@@ -179,7 +157,7 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
       );
     }
 
-    if (_databases.isEmpty) {
+    if (_views.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -193,7 +171,7 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'No databases found',
+                'No views found',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -201,7 +179,7 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Create a database in Notion and try again',
+                'This database has no available views',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -210,7 +188,7 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _loadDatabases,
+                onPressed: _loadViews,
                 child: const Text('Refresh'),
               ),
             ],
@@ -222,7 +200,7 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 안내 메시지
+        // 데이터베이스 정보
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.all(16),
@@ -232,26 +210,54 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
           ),
           child: Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.blue.shade700),
+              Icon(Icons.storage, color: Colors.blue.shade700),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  'Select a database to display on your widget',
-                  style: TextStyle(
-                    color: Colors.blue.shade700,
-                    fontSize: 14,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Database',
+                      style: TextStyle(
+                        color: Colors.blue.shade700,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _databaseTitle,
+                      style: TextStyle(
+                        color: Colors.blue.shade900,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
 
-        // 데이터베이스 개수
+        // 안내 메시지
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            '${_databases.length} database${_databases.length != 1 ? 's' : ''} found',
+            'Select a view to display on your widget',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // View 개수
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            '${_views.length} view${_views.length != 1 ? 's' : ''} available',
             style: const TextStyle(
               fontSize: 14,
               color: Colors.grey,
@@ -261,18 +267,18 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
         ),
         const SizedBox(height: 8),
 
-        // 데이터베이스 목록
+        // View 목록
         Expanded(
           child: RefreshIndicator(
-            onRefresh: _loadDatabases,
+            onRefresh: _loadViews,
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _databases.length,
+              itemCount: _views.length,
               itemBuilder: (context, index) {
-                final database = _databases[index];
-                return _DatabaseListTile(
-                  database: database,
-                  onTap: () => _selectDatabase(database),
+                final view = _views[index];
+                return _ViewListTile(
+                  view: view,
+                  onTap: () => _selectView(view),
                 );
               },
             ),
@@ -283,13 +289,13 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
   }
 }
 
-/// 데이터베이스 목록 항목
-class _DatabaseListTile extends StatelessWidget {
-  final NotionDatabase database;
+/// View 목록 항목
+class _ViewListTile extends StatelessWidget {
+  final NotionView view;
   final VoidCallback onTap;
 
-  const _DatabaseListTile({
-    required this.database,
+  const _ViewListTile({
+    required this.view,
     required this.onTap,
   });
 
@@ -319,7 +325,7 @@ class _DatabaseListTile extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    database.icon ?? '🗄️',
+                    view.icon,
                     style: const TextStyle(fontSize: 24),
                   ),
                 ),
@@ -332,7 +338,7 @@ class _DatabaseListTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      database.title,
+                      view.name,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -342,7 +348,7 @@ class _DatabaseListTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Last edited ${_formatDate(database.lastEditedTime)}',
+                      view.typeDisplayName,
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -362,21 +368,5 @@ class _DatabaseListTile extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        return 'just now';
-      }
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
   }
 }

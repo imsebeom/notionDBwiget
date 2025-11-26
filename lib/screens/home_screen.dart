@@ -40,10 +40,11 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final accessToken = await _tokenStorage.getAccessToken();
       final databaseId = await _tokenStorage.getDatabaseId();
+      final viewId = await _tokenStorage.getViewId();
 
-      if (accessToken == null || databaseId == null) {
+      if (accessToken == null || databaseId == null || viewId == null) {
         setState(() {
-          _error = 'Authentication required';
+          _error = 'Authentication or selection required';
           _isLoading = false;
         });
         return;
@@ -51,9 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final apiService = NotionApiService(accessToken: accessToken);
       
-      // 데이터베이스 정보 및 페이지 목록 가져오기
+      // 데이터베이스 정보 및 선택된 View의 페이지 목록 가져오기
       final database = await apiService.getDatabase(databaseId);
-      final pages = await apiService.getDatabasePages(databaseId);
+      final pages = await apiService.getDatabasePagesByView(databaseId, viewId);
 
       setState(() {
         _database = database;
@@ -63,7 +64,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // 위젯 업데이트
       if (database != null && pages.isNotEmpty) {
-        await _widgetService.updateWidget(pages, database.title);
+        final viewName = await _tokenStorage.getViewName();
+        final widgetTitle = viewName != null 
+            ? '${database.title} - $viewName' 
+            : database.title;
+        await _widgetService.updateWidget(pages, widgetTitle);
       }
     } catch (e) {
       setState(() {
@@ -82,25 +87,58 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Settings'),
-        content: const Text('Do you want to logout and reset your connection?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.view_agenda),
+              label: const Text('Change View'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacementNamed('/view-select');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.storage),
+              label: const Text('Change Database'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacementNamed('/database-select');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.logout),
+              label: const Text('Logout'),
+              onPressed: () async {
+                await _tokenStorage.clearAll();
+                await _widgetService.clearWidget();
+                
+                if (!mounted) return;
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacementNamed('/login');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await _tokenStorage.clearAll();
-              await _widgetService.clearWidget();
-              
-              if (!mounted) return;
-              Navigator.of(context).pop();
-              Navigator.of(context).pushReplacementNamed('/login');
-            },
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
-            ),
           ),
         ],
       ),
@@ -112,20 +150,28 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Notion Widget'),
-            if (_database != null)
-              Text(
-                _database!.title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.normal,
-                  color: Colors.grey,
-                ),
-              ),
-          ],
+        title: FutureBuilder<String?>(
+          future: _tokenStorage.getViewName(),
+          builder: (context, snapshot) {
+            final viewName = snapshot.data;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Notion Widget'),
+                if (_database != null)
+                  Text(
+                    viewName != null 
+                        ? '${_database!.title} - $viewName'
+                        : _database!.title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.grey,
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
         backgroundColor: Colors.white,
         elevation: 0,

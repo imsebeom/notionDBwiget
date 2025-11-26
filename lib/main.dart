@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'providers/notion_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/database_select_screen.dart';
+import 'screens/view_select_screen.dart';
+import 'screens/widget_config_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/token_storage_service.dart';
 
@@ -31,6 +33,8 @@ class MyApp extends StatelessWidget {
         routes: {
           '/login': (context) => const LoginScreen(),
           '/database-select': (context) => const DatabaseSelectScreen(),
+          '/view-select': (context) => const ViewSelectScreen(),
+          '/widget-config': (context) => const WidgetConfigScreen(),
           '/home': (context) => const HomeScreen(),
         },
       ),
@@ -65,6 +69,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // 인증 상태 확인
       final isAuthenticated = await _tokenStorage.isAuthenticated();
       final isDatabaseSelected = await _tokenStorage.isDatabaseSelected();
+      final isViewSelected = await _tokenStorage.isViewSelected();
 
       if (!mounted) return;
 
@@ -74,6 +79,9 @@ class _SplashScreenState extends State<SplashScreen> {
       } else if (!isDatabaseSelected) {
         // 데이터베이스 선택 필요
         Navigator.of(context).pushReplacementNamed('/database-select');
+      } else if (!isViewSelected) {
+        // View 선택 필요
+        Navigator.of(context).pushReplacementNamed('/view-select');
       } else {
         // 홈 화면으로 이동
         Navigator.of(context).pushReplacementNamed('/home');

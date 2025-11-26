@@ -5,6 +5,8 @@ class TokenStorageService {
   static const String _keyAccessToken = 'notion_access_token';
   static const String _keyDatabaseId = 'notion_database_id';
   static const String _keyDatabaseTitle = 'notion_database_title';
+  static const String _keyViewId = 'notion_view_id';
+  static const String _keyViewName = 'notion_view_name';
   static const String _keyWorkspaceId = 'notion_workspace_id';
   static const String _keyWorkspaceName = 'notion_workspace_name';
   static const String _keyBotId = 'notion_bot_id';
@@ -75,6 +77,26 @@ class TokenStorageService {
     return await _storage.read(key: _keyBotId);
   }
 
+  /// View ID 저장
+  Future<void> saveViewId(String viewId) async {
+    await _storage.write(key: _keyViewId, value: viewId);
+  }
+
+  /// View ID 가져오기
+  Future<String?> getViewId() async {
+    return await _storage.read(key: _keyViewId);
+  }
+
+  /// View Name 저장
+  Future<void> saveViewName(String viewName) async {
+    await _storage.write(key: _keyViewName, value: viewName);
+  }
+
+  /// View Name 가져오기
+  Future<String?> getViewName() async {
+    return await _storage.read(key: _keyViewName);
+  }
+
   /// 모든 데이터 삭제
   Future<void> clearAll() async {
     await _storage.deleteAll();
@@ -90,5 +112,11 @@ class TokenStorageService {
   Future<bool> isDatabaseSelected() async {
     final databaseId = await getDatabaseId();
     return databaseId != null && databaseId.isNotEmpty;
+  }
+
+  /// View 선택 여부 확인
+  Future<bool> isViewSelected() async {
+    final viewId = await getViewId();
+    return viewId != null && viewId.isNotEmpty;
   }
 }
