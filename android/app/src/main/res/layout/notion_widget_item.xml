@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/page_item_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="12dp"
-    android:background="@android:color/white">
+    android:background="@android:color/white"
+    android:clickable="true"
+    android:focusable="true">
 
     <TextView
         android:id="@+id/page_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="📄"
-        android:textSize="20sp"
-        android:layout_marginEnd="12dp" />
+        android:textSize="22sp"
+        android:layout_marginEnd="12dp"
+        android:layout_gravity="center_vertical" />
 
     <TextView
         android:id="@+id/page_title"
@@ -20,9 +24,10 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="Page Title"
-        android:textSize="14sp"
-        android:textColor="#000000"
+        android:textSize="15sp"
+        android:textColor="#2E2E2E"
         android:maxLines="2"
-        android:ellipsize="end" />
+        android:ellipsize="end"
+        android:layout_gravity="center_vertical" />
 
 </LinearLayout>

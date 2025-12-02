@@ -49,11 +49,18 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.flutter_app.ACTION_ITEM_CLICK" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/notion_widget_info" />
         </receiver>
+        
+        <!-- Widget RemoteViewsService for ListView -->
+        <service
+            android:name=".NotionWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
