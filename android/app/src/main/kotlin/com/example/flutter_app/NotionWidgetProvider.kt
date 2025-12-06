@@ -85,6 +85,19 @@ class NotionWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.widget_header, appPendingIntent)
 
+            // '+' 버튼 클릭 시 새 페이지 추가 다이얼로그 열기
+            val addPageIntent = Intent(context, MainActivity::class.java).apply {
+                action = "ACTION_ADD_PAGE"
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val addPagePendingIntent = PendingIntent.getActivity(
+                context,
+                1,
+                addPageIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.add_page_button, addPagePendingIntent)
+
             // 위젯 업데이트
             appWidgetManager.updateAppWidget(appWidgetId, views)
             appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list)

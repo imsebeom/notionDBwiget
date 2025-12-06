@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/notion_page.dart';
 import '../models/notion_database.dart';
 import '../services/notion_api_service.dart';
@@ -325,13 +326,20 @@ class _PageListTile extends StatelessWidget {
         Icons.chevron_right,
         color: Colors.grey,
       ),
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Open: ${page.title}'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
+      onTap: () async {
+        final uri = Uri.parse(page.url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Cannot open: ${page.title}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
       },
     );
   }

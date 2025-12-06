@@ -2,18 +2,20 @@ import 'dart:convert';
 
 /// 위젯 설정 모델 (데이터베이스, 필터, 정렬 정보 저장)
 class WidgetConfig {
+  final String id; // 위젯 고유 ID (위젯 여러개 관리)
   final String databaseId;
   final String databaseTitle;
   final String? databaseIcon;
-  final Map<String, dynamic>? filter;
+  final List<Map<String, dynamic>>? filters; // 여러 필터 지원 (변경: filter -> filters, List로 변경)
   final List<Map<String, dynamic>>? sorts;
   final String configName; // 설정 이름 (예: "진행중인 작업", "완료된 프로젝트")
   
   WidgetConfig({
+    required this.id,
     required this.databaseId,
     required this.databaseTitle,
     this.databaseIcon,
-    this.filter,
+    this.filters,
     this.sorts,
     this.configName = 'Default View',
   });
@@ -21,10 +23,11 @@ class WidgetConfig {
   /// JSON으로 변환
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'databaseId': databaseId,
       'databaseTitle': databaseTitle,
       'databaseIcon': databaseIcon,
-      'filter': filter,
+      'filters': filters,
       'sorts': sorts,
       'configName': configName,
     };
@@ -33,11 +36,12 @@ class WidgetConfig {
   /// JSON에서 생성
   factory WidgetConfig.fromJson(Map<String, dynamic> json) {
     return WidgetConfig(
+      id: json['id'] as String,
       databaseId: json['databaseId'] as String,
       databaseTitle: json['databaseTitle'] as String,
       databaseIcon: json['databaseIcon'] as String?,
-      filter: json['filter'] as Map<String, dynamic>?,
-      sorts: (json['sorts'] as List?)?.cast<Map<String, dynamic>>(),
+      filters: (json['filters'] as List?)?.map((e) => e as Map<String, dynamic>).toList(),
+      sorts: (json['sorts'] as List?)?.map((e) => e as Map<String, dynamic>).toList(),
       configName: json['configName'] as String? ?? 'Default View',
     );
   }
@@ -54,25 +58,27 @@ class WidgetConfig {
 
   /// 복사본 생성
   WidgetConfig copyWith({
+    String? id,
     String? databaseId,
     String? databaseTitle,
     String? databaseIcon,
-    Map<String, dynamic>? filter,
+    List<Map<String, dynamic>>? filters,
     List<Map<String, dynamic>>? sorts,
     String? configName,
   }) {
     return WidgetConfig(
+      id: id ?? this.id,
       databaseId: databaseId ?? this.databaseId,
       databaseTitle: databaseTitle ?? this.databaseTitle,
       databaseIcon: databaseIcon ?? this.databaseIcon,
-      filter: filter ?? this.filter,
+      filters: filters ?? this.filters,
       sorts: sorts ?? this.sorts,
       configName: configName ?? this.configName,
     );
   }
 
   /// 필터가 적용되었는지 확인
-  bool get hasFilter => filter != null && filter!.isNotEmpty;
+  bool get hasFilters => filters != null && filters!.isNotEmpty;
 
   /// 정렬이 적용되었는지 확인
   bool get hasSorts => sorts != null && sorts!.isNotEmpty;
@@ -81,8 +87,8 @@ class WidgetConfig {
   String get summary {
     final parts = <String>[];
     
-    if (hasFilter) {
-      parts.add('Filtered');
+    if (hasFilters) {
+      parts.add('${filters!.length} filter(s)');
     }
     
     if (hasSorts) {
@@ -94,6 +100,13 @@ class WidgetConfig {
     }
     
     return parts.join(' • ');
+  }
+  
+  /// Notion API 필터 형식으로 변환 (여러 필터를 AND로 결합)
+  Map<String, dynamic>? toNotionFilter() {
+    if (filters == null || filters!.isEmpty) return null;
+    if (filters!.length == 1) return filters!.first;
+    return {'and': filters};
   }
 }
 

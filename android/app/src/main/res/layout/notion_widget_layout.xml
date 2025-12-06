@@ -1,47 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="0dp"
     android:background="@android:color/white">
 
-    <!-- 위젯 헤더 (클릭 가능) -->
     <LinearLayout
-        android:id="@+id/widget_header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="12dp"
-        android:background="#2E2E2E"
-        android:clickable="true">
-
-        <TextView
-            android:id="@+id/widget_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Notion Widget"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF" />
-
-        <TextView
-            android:id="@+id/widget_count"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0 items"
-            android:textSize="13sp"
-            android:textColor="#CCCCCC" />
-    </LinearLayout>
-
-    <!-- 페이지 목록 -->
-    <ListView
-        android:id="@+id/widget_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:divider="#E0E0E0"
-        android:dividerHeight="1dp"
-        android:background="@android:color/white" />
+        android:orientation="vertical">
 
-</LinearLayout>
+        <!-- 위젯 헤더 (클릭 가능) -->
+        <LinearLayout
+            android:id="@+id/widget_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:background="#2E2E2E"
+            android:clickable="true">
+
+            <TextView
+                android:id="@+id/widget_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Notion Widget"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/widget_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 items"
+                android:textSize="13sp"
+                android:textColor="#CCCCCC" />
+        </LinearLayout>
+
+        <!-- 페이지 목록 -->
+        <ListView
+            android:id="@+id/widget_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:divider="#E0E0E0"
+            android:dividerHeight="1dp"
+            android:background="@android:color/white" />
+    </LinearLayout>
+
+    <!-- 새 페이지 추가 버튼 (우하단 고정) -->
+    <TextView
+        android:id="@+id/add_page_button"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:background="@android:drawable/ic_input_add"
+        android:backgroundTint="#2E2E2E"
+        android:clickable="true"
+        android:gravity="center"
+        android:text="+"
+        android:textColor="#FFFFFF"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:elevation="6dp" />
+
+</FrameLayout>

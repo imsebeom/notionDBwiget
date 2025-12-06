@@ -262,4 +262,49 @@ class NotionApiService {
       return false;
     }
   }
+
+  /// 데이터베이스에 새 페이지 생성
+  Future<Map<String, dynamic>?> createPage({
+    required String databaseId,
+    required String title,
+  }) async {
+    try {
+      _logDebug('Creating page in database', data: databaseId);
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/pages'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'parent': {
+            'database_id': databaseId,
+          },
+          'properties': {
+            'title': {
+              'title': [
+                {
+                  'text': {
+                    'content': title,
+                  },
+                },
+              ],
+            },
+          },
+        }),
+      );
+
+      _logDebug('Create page response status', data: response.statusCode);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        _logDebug('Page created', data: data['id']);
+        return data;
+      } else {
+        _logDebug('Page creation failed', data: response.body);
+        return null;
+      }
+    } catch (e) {
+      _logDebug('Page creation error', data: e.toString());
+      return null;
+    }
+  }
 }

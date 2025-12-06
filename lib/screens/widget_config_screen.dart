@@ -198,11 +198,13 @@ class _WidgetConfigScreenState extends State<WidgetConfigScreen> {
     }
 
     // 위젯 설정 생성
+    final filter = _buildFilter();
     final config = WidgetConfig(
+      id: DateTime.now().millisecondsSinceEpoch.toString(), // 고유 ID 생성
       databaseId: _selectedDatabase!.id,
       databaseTitle: _selectedDatabase!.title,
       databaseIcon: _selectedDatabase!.icon,
-      filter: _buildFilter(),
+      filters: filter != null ? [filter] : null, // filter를 filters 리스트로 변환
       sorts: _buildSorts(),
       configName: _selectedDatabase!.title,
     );

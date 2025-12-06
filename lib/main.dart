@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/notion_provider.dart';
 import 'screens/login_screen.dart';
@@ -7,19 +8,59 @@ import 'screens/view_select_screen.dart';
 import 'screens/widget_config_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/token_storage_service.dart';
+import 'widgets/add_page_dialog.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  static const platform = MethodChannel('com.example.flutter_app/widget');
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _setupMethodChannel();
+  }
+
+  void _setupMethodChannel() {
+    platform.setMethodCallHandler((call) async {
+      if (call.method == 'showAddPageDialog') {
+        _showAddPageDialog();
+      }
+    });
+  }
+
+  void _showAddPageDialog() {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      showDialog(
+        context: context,
+        builder: (context) => const AddPageDialog(),
+      ).then((result) {
+        // 페이지가 생성되었으면 홈 화면 새로고침
+        if (result == true) {
+          // HomeScreen에 새로고침 이벤트 전달 (추후 구현)
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => NotionProvider(),
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: 'Notion Widget',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
