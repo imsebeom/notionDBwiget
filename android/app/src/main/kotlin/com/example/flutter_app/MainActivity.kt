@@ -22,10 +22,18 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        if (intent?.action == "ACTION_ADD_PAGE") {
-            // Notify Flutter to show add page dialog
-            flutterEngine?.dartExecutor?.binaryMessenger?.let {
-                MethodChannel(it, CHANNEL).invokeMethod("showAddPageDialog", null)
+        when (intent?.action) {
+            "ACTION_ADD_PAGE" -> {
+                // Notify Flutter to show add page dialog
+                flutterEngine?.dartExecutor?.binaryMessenger?.let {
+                    MethodChannel(it, CHANNEL).invokeMethod("showAddPageDialog", null)
+                }
+            }
+            "ACTION_REFRESH_DATA" -> {
+                // Notify Flutter to refresh data
+                flutterEngine?.dartExecutor?.binaryMessenger?.let {
+                    MethodChannel(it, CHANNEL).invokeMethod("refreshData", null)
+                }
             }
         }
     }

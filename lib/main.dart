@@ -34,8 +34,13 @@ class _MyAppState extends State<MyApp> {
 
   void _setupMethodChannel() {
     platform.setMethodCallHandler((call) async {
-      if (call.method == 'showAddPageDialog') {
-        _showAddPageDialog();
+      switch (call.method) {
+        case 'showAddPageDialog':
+          _showAddPageDialog();
+          break;
+        case 'refreshData':
+          _refreshData();
+          break;
       }
     });
   }
@@ -49,9 +54,26 @@ class _MyAppState extends State<MyApp> {
       ).then((result) {
         // 페이지가 생성되었으면 홈 화면 새로고침
         if (result == true) {
-          // HomeScreen에 새로고침 이벤트 전달 (추후 구현)
+          _refreshData();
         }
       });
+    }
+  }
+
+  void _refreshData() {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      // 현재 화면이 HomeScreen인지 확인하고 새로고침
+      // Navigator를 통해 HomeScreen 찾기 (추후 개선 가능)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Refreshing widget data...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      
+      // 홈 화면으로 이동하고 새로고침
+      Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
     }
   }
 

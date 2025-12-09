@@ -1,11 +1,13 @@
 package com.example.flutter_app
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetPlugin
 
@@ -22,21 +24,28 @@ class NotionWidgetProvider : AppWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
+        
+        // 주기적 업데이트 설정 (30분마다)
+        setupPeriodicUpdate(context)
     }
 
     override fun onEnabled(context: Context) {
         // 첫 위젯 추가 시
         super.onEnabled(context)
+        setupPeriodicUpdate(context)
     }
 
     override fun onDisabled(context: Context) {
         // 마지막 위젯 제거 시
         super.onDisabled(context)
+        cancelPeriodicUpdate(context)
     }
 
     companion object {
         private const val ACTION_ITEM_CLICK = "com.example.flutter_app.ACTION_ITEM_CLICK"
+        private const val ACTION_REFRESH = "com.example.flutter_app.ACTION_REFRESH"
         const val EXTRA_PAGE_URL = "page_url"
+        private const val UPDATE_INTERVAL_MILLIS = 30 * 60 * 1000L // 30분
 
         fun updateAppWidget(
             context: Context,
@@ -98,23 +107,96 @@ class NotionWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.add_page_button, addPagePendingIntent)
 
+            // 새로고침 버튼 클릭 시 처리
+            val refreshIntent = Intent(context, NotionWidgetProvider::class.java).apply {
+                action = ACTION_REFRESH
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(appWidgetId))
+            }
+            val refreshPendingIntent = PendingIntent.getBroadcast(
+                context,
+                2,
+                refreshIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent)
+
             // 위젯 업데이트
             appWidgetManager.updateAppWidget(appWidgetId, views)
             appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list)
+        }
+
+        /**
+         * 주기적 업데이트 설정 (30분마다)
+         */
+        private fun setupPeriodicUpdate(context: Context) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val intent = Intent(context, NotionWidgetProvider::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            // 주기적 알람 설정 (30분마다)
+            alarmManager.setRepeating(
+                AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + UPDATE_INTERVAL_MILLIS,
+                UPDATE_INTERVAL_MILLIS,
+                pendingIntent
+            )
+        }
+
+        /**
+         * 주기적 업데이트 취소
+         */
+        private fun cancelPeriodicUpdate(context: Context) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val intent = Intent(context, NotionWidgetProvider::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.cancel(pendingIntent)
         }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
 
-        if (intent.action == ACTION_ITEM_CLICK) {
-            val pageUrl = intent.getStringExtra(EXTRA_PAGE_URL)
-            if (pageUrl != null) {
-                // 브라우저에서 Notion 페이지 열기
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(pageUrl)).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        when (intent.action) {
+            ACTION_ITEM_CLICK -> {
+                val pageUrl = intent.getStringExtra(EXTRA_PAGE_URL)
+                if (pageUrl != null) {
+                    // 브라우저에서 Notion 페이지 열기
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(pageUrl)).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    context.startActivity(browserIntent)
                 }
-                context.startActivity(browserIntent)
+            }
+            ACTION_REFRESH -> {
+                // 새로고침: Flutter 앱에 데이터 갱신 요청
+                val appIntent = Intent(context, MainActivity::class.java).apply {
+                    action = "ACTION_REFRESH_DATA"
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                }
+                context.startActivity(appIntent)
+                
+                // 위젯도 즉시 업데이트
+                val appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)
+                if (appWidgetIds != null) {
+                    val appWidgetManager = AppWidgetManager.getInstance(context)
+                    for (appWidgetId in appWidgetIds) {
+                        updateAppWidget(context, appWidgetManager, appWidgetId)
+                    }
+                }
             }
         }
     }

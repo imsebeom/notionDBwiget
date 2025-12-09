@@ -36,7 +36,19 @@
                 android:layout_height="wrap_content"
                 android:text="0 items"
                 android:textSize="13sp"
-                android:textColor="#CCCCCC" />
+                android:textColor="#CCCCCC"
+                android:layout_marginEnd="12dp" />
+
+            <ImageButton
+                android:id="@+id/refresh_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@android:color/transparent"
+                android:src="@android:drawable/ic_popup_sync"
+                android:tint="#FFFFFF"
+                android:scaleType="fitCenter"
+                android:contentDescription="Refresh"
+                android:clickable="true" />
         </LinearLayout>
 
         <!-- 페이지 목록 -->
