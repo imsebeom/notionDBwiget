@@ -6,6 +6,7 @@ import 'screens/login_screen.dart';
 import 'screens/database_select_screen.dart';
 import 'screens/view_select_screen.dart';
 import 'screens/widget_config_screen.dart';
+import 'screens/widget_management_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/token_storage_service.dart';
 import 'widgets/add_page_dialog.dart';
@@ -98,6 +99,7 @@ class _MyAppState extends State<MyApp> {
           '/database-select': (context) => const DatabaseSelectScreen(),
           '/view-select': (context) => const ViewSelectScreen(),
           '/widget-config': (context) => const WidgetConfigScreen(),
+          '/widget-management': (context) => const WidgetManagementScreen(),
           '/home': (context) => const HomeScreen(),
         },
       ),

@@ -93,6 +93,19 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ElevatedButton.icon(
+              icon: const Icon(Icons.widgets),
+              label: const Text('Widget Management'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed('/widget-management');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E2E2E),
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
               icon: const Icon(Icons.view_agenda),
               label: const Text('Change View'),
               onPressed: () {
