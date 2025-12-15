@@ -24,9 +24,8 @@ class WidgetService {
         await HomeWidget.saveWidgetData<String>('page_${i}_icon', page.icon ?? '📄');
         await HomeWidget.saveWidgetData<String>('page_${i}_id', page.id);
         
-        // Notion 페이지 URL 저장 (웹에서 열기 위함)
-        final pageUrl = 'https://www.notion.so/${page.id.replaceAll("-", "")}';
-        await HomeWidget.saveWidgetData<String>('page_${i}_url', pageUrl);
+        // ✅ Notion API에서 제공하는 정확한 페이지 URL 저장
+        await HomeWidget.saveWidgetData<String>('page_${i}_url', page.url);
       }
       
       // 마지막 업데이트 시간

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 import '../models/widget_config.dart';
 import '../services/widget_config_storage.dart';
 import 'widget_filter_screen.dart';
