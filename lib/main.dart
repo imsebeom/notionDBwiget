@@ -42,6 +42,10 @@ class _MyAppState extends State<MyApp> {
         case 'refreshData':
           _refreshData();
           break;
+        case 'configureWidget':
+          final widgetId = call.arguments['widgetId'] as int?;
+          _showWidgetConfiguration(widgetId);
+          break;
       }
     });
   }
@@ -75,6 +79,17 @@ class _MyAppState extends State<MyApp> {
       
       // 홈 화면으로 이동하고 새로고침
       Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+    }
+  }
+
+  void _showWidgetConfiguration(int? widgetId) {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      // 위젯 관리 화면으로 이동
+      Navigator.of(context).pushNamed('/widget-management').then((_) {
+        // 위젯 설정이 완료되면 위젯 업데이트
+        _refreshData();
+      });
     }
   }
 
@@ -134,7 +149,6 @@ class _SplashScreenState extends State<SplashScreen> {
       // 인증 상태 확인
       final isAuthenticated = await _tokenStorage.isAuthenticated();
       final isDatabaseSelected = await _tokenStorage.isDatabaseSelected();
-      final isViewSelected = await _tokenStorage.isViewSelected();
 
       if (!mounted) return;
 
@@ -144,11 +158,8 @@ class _SplashScreenState extends State<SplashScreen> {
       } else if (!isDatabaseSelected) {
         // 데이터베이스 선택 필요
         Navigator.of(context).pushReplacementNamed('/database-select');
-      } else if (!isViewSelected) {
-        // View 선택 필요
-        Navigator.of(context).pushReplacementNamed('/view-select');
       } else {
-        // 홈 화면으로 이동
+        // 홈 화면으로 이동 (View 선택 단계 제거)
         Navigator.of(context).pushReplacementNamed('/home');
       }
     } catch (e) {

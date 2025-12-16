@@ -65,11 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // 위젯 업데이트
       if (database != null && pages.isNotEmpty) {
-        final viewName = await _tokenStorage.getViewName();
-        final widgetTitle = viewName != null 
-            ? '${database.title} - $viewName' 
-            : database.title;
-        await _widgetService.updateWidget(pages, widgetTitle);
+        await _widgetService.updateWidget(pages, database.title);
       }
     } catch (e) {
       setState(() {
@@ -105,19 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.view_agenda),
-              label: const Text('Change View'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushReplacementNamed('/view-select');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 12),
+
             ElevatedButton.icon(
               icon: const Icon(Icons.storage),
               label: const Text('Change Database'),
@@ -164,28 +148,20 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: FutureBuilder<String?>(
-          future: _tokenStorage.getViewName(),
-          builder: (context, snapshot) {
-            final viewName = snapshot.data;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Notion Widget'),
-                if (_database != null)
-                  Text(
-                    viewName != null 
-                        ? '${_database!.title} - $viewName'
-                        : _database!.title,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.grey,
-                    ),
-                  ),
-              ],
-            );
-          },
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Notion Widget'),
+            if (_database != null)
+              Text(
+                _database!.title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.normal,
+                  color: Colors.grey,
+                ),
+              ),
+          ],
         ),
         backgroundColor: Colors.white,
         elevation: 0,

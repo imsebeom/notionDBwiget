@@ -35,6 +35,14 @@ class MainActivity : FlutterActivity() {
                     MethodChannel(it, CHANNEL).invokeMethod("refreshData", null)
                 }
             }
+            "ACTION_CONFIGURE_WIDGET" -> {
+                // Notify Flutter to show widget configuration screen
+                val widgetId = intent.getIntExtra("appWidgetId", -1)
+                flutterEngine?.dartExecutor?.binaryMessenger?.let {
+                    val args = mapOf("widgetId" to widgetId)
+                    MethodChannel(it, CHANNEL).invokeMethod("configureWidget", args)
+                }
+            }
         }
     }
 }

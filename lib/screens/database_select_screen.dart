@@ -65,8 +65,8 @@ class _DatabaseSelectScreenState extends State<DatabaseSelectScreen> {
 
       if (!mounted) return;
 
-      // View 선택 화면으로 이동
-      Navigator.of(context).pushReplacementNamed('/view-select');
+      // 홈 화면으로 직접 이동 (View 선택 단계 제거)
+      Navigator.of(context).pushReplacementNamed('/home');
     } catch (e) {
       if (!mounted) return;
       

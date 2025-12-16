@@ -4,6 +4,7 @@
     android:minHeight="180dp"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/notion_widget_layout"
+    android:configure="com.example.flutter_app.WidgetConfigureActivity"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:previewImage="@mipmap/ic_launcher"
