@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import '../models/widget_config.dart';
 import '../services/widget_config_storage.dart';
+import '../services/token_storage_service.dart';
+import '../services/notion_api_service.dart';
+import '../services/widget_service.dart';
 import 'widget_filter_screen.dart';
 
 /// 위젯 관리 화면 - 여러 위젯 설정 관리
 class WidgetManagementScreen extends StatefulWidget {
-  const WidgetManagementScreen({super.key});
+  final bool isSelectMode; // 위젯 선택 모드 여부
+  final int? widgetId; // 설정할 위젯 ID
+  
+  const WidgetManagementScreen({
+    super.key,
+    this.isSelectMode = false,
+    this.widgetId,
+  });
 
   @override
   State<WidgetManagementScreen> createState() => _WidgetManagementScreenState();
@@ -13,6 +23,8 @@ class WidgetManagementScreen extends StatefulWidget {
 
 class _WidgetManagementScreenState extends State<WidgetManagementScreen> {
   final _storage = WidgetConfigStorage();
+  final _tokenStorage = TokenStorageService();
+  final _widgetService = WidgetService();
   List<WidgetConfig> _configs = [];
   bool _isLoading = true;
 
@@ -84,11 +96,55 @@ class _WidgetManagementScreenState extends State<WidgetManagementScreen> {
   }
 
   Future<void> _setActiveWidget(WidgetConfig config) async {
-    await _storage.setActiveWidgetId(config.id);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Active widget: ${config.configName}')),
-      );
+    try {
+      // 활성 위젯 설정
+      await _storage.setActiveWidgetId(config.id);
+      
+      // 선택된 설정으로 위젯 데이터 업데이트
+      final accessToken = await _tokenStorage.getAccessToken();
+      if (accessToken != null) {
+        final apiService = NotionApiService(accessToken: accessToken);
+        
+        // 필터와 정렬을 적용하여 페이지 가져오기
+        final pages = await apiService.getDatabasePages(
+          config.databaseId,
+          filter: (config.filters != null && config.filters!.isNotEmpty) 
+              ? {'and': config.filters} 
+              : null,
+          sorts: config.sorts,
+        );
+        
+        // 위젯 업데이트
+        await _widgetService.updateWidget(pages, config.databaseTitle);
+      }
+      
+      // 선택 모드인 경우 결과 반환하고 닫기
+      if (widget.isSelectMode) {
+        if (mounted) {
+          Navigator.of(context).pop(config);
+        }
+        return;
+      }
+      
+      // 일반 모드인 경우 스낵바 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Active widget: ${config.configName}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() {}); // UI 새로고침
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to apply widget: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -97,7 +153,7 @@ class _WidgetManagementScreenState extends State<WidgetManagementScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Widget Management'),
+        title: Text(widget.isSelectMode ? 'Select Widget Configuration' : 'Widget Management'),
         backgroundColor: Colors.white,
         elevation: 0,
       ),
@@ -265,43 +321,61 @@ class _WidgetManagementScreenState extends State<WidgetManagementScreen> {
 
                       // 액션 버튼들
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          if (!isActive)
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _setActiveWidget(config),
-                                icon: const Icon(Icons.check_circle_outline, size: 18),
-                                label: const Text('Set Active'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF2E2E2E),
+                      widget.isSelectMode
+                          ? 
+                          // 선택 모드: 선택 버튼만 표시
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _setActiveWidget(config),
+                              icon: const Icon(Icons.check_circle, size: 20),
+                              label: const Text('Select This Widget'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2E2E2E),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          )
+                          :
+                          // 일반 모드: 편집/삭제 버튼 표시
+                          Row(
+                            children: [
+                              if (!isActive)
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _setActiveWidget(config),
+                                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                                    label: const Text('Set Active'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFF2E2E2E),
+                                    ),
+                                  ),
+                                ),
+                              if (!isActive) const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _editWidget(config),
+                                  icon: const Icon(Icons.edit, size: 18),
+                                  label: const Text('Edit'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.blue,
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (!isActive) const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _editWidget(config),
-                              icon: const Icon(Icons.edit, size: 18),
-                              label: const Text('Edit'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.blue,
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _deleteWidget(config),
+                                  icon: const Icon(Icons.delete, size: 18),
+                                  label: const Text('Delete'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _deleteWidget(config),
-                              icon: const Icon(Icons.delete, size: 18),
-                              label: const Text('Delete'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),

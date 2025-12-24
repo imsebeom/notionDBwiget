@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'models/widget_config.dart';
 import 'providers/notion_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/database_select_screen.dart';
@@ -82,14 +83,33 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void _showWidgetConfiguration(int? widgetId) {
+  void _showWidgetConfiguration(int? widgetId) async {
     final context = navigatorKey.currentContext;
     if (context != null) {
-      // 위젯 관리 화면으로 이동
-      Navigator.of(context).pushNamed('/widget-management').then((_) {
-        // 위젯 설정이 완료되면 위젯 업데이트
+      // 위젯 관리 화면을 선택 모드로 열기
+      final result = await Navigator.of(context).push<WidgetConfig>(
+        MaterialPageRoute(
+          builder: (context) => WidgetManagementScreen(
+            isSelectMode: true,
+            widgetId: widgetId,
+          ),
+        ),
+      );
+      
+      // 위젯이 선택되면 데이터 새로고침
+      if (result != null) {
         _refreshData();
-      });
+        
+        // 선택 완료 메시지
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Widget configured: ${result.configName}'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
     }
   }
 
