@@ -31,38 +31,16 @@ class WidgetConfigureActivity : Activity() {
         }
         
         // Flutter 앱의 위젯 관리 화면으로 이동
+        // MainActivity가 결과를 처리하고 자동으로 종료됨
         val intent = Intent(this, MainActivity::class.java).apply {
             action = "ACTION_CONFIGURE_WIDGET"
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            // MainActivity가 설정을 완료하면 자동으로 finish()됨
         }
         
-        startActivityForResult(intent, REQUEST_WIDGET_CONFIG)
-    }
-    
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        
-        if (requestCode == REQUEST_WIDGET_CONFIG) {
-            if (resultCode == RESULT_OK) {
-                // 위젯 설정 완료
-                val appWidgetManager = AppWidgetManager.getInstance(this)
-                NotionWidgetProvider.updateAppWidget(this, appWidgetManager, appWidgetId)
-                
-                // 결과 반환
-                val resultValue = Intent().apply {
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                }
-                setResult(RESULT_OK, resultValue)
-            } else {
-                // 위젯 설정 취소
-                setResult(RESULT_CANCELED)
-            }
-            finish()
-        }
-    }
-    
-    companion object {
-        private const val REQUEST_WIDGET_CONFIG = 1001
+        startActivity(intent)
+        // WidgetConfigureActivity 즉시 종료
+        // MainActivity가 설정 완료 후 자동으로 결과를 홈 화면에 전달함
+        finish()
     }
 }

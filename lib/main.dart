@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'models/widget_config.dart';
@@ -108,6 +109,30 @@ class _MyAppState extends State<MyApp> {
               backgroundColor: Colors.green,
             ),
           );
+        }
+        
+        // Android Activity에 결과 전달
+        try {
+          await platform.invokeMethod('widgetConfigured', {
+            'widgetId': widgetId,
+            'success': true,
+          });
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Failed to notify Android: $e');
+          }
+        }
+      } else {
+        // 취소된 경우
+        try {
+          await platform.invokeMethod('widgetConfigured', {
+            'widgetId': widgetId,
+            'success': false,
+          });
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Failed to notify Android: $e');
+          }
         }
       }
     }
