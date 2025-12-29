@@ -46,6 +46,8 @@ class _MyAppState extends State<MyApp> {
           break;
         case 'configureWidget':
           final widgetId = call.arguments['widgetId'] as int?;
+          // Wait for Flutter to be ready before showing configuration
+          await Future.delayed(const Duration(milliseconds: 500));
           _showWidgetConfiguration(widgetId);
           break;
       }
@@ -85,8 +87,33 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _showWidgetConfiguration(int? widgetId) async {
+    // Wait for context to be available
+    var attempts = 0;
+    while (navigatorKey.currentContext == null && attempts < 10) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      attempts++;
+    }
+    
     final context = navigatorKey.currentContext;
-    if (context != null) {
+    if (context == null) {
+      if (kDebugMode) {
+        debugPrint('Context not available for widget configuration');
+      }
+      // Notify Android that configuration failed
+      try {
+        await platform.invokeMethod('widgetConfigured', {
+          'widgetId': widgetId,
+          'success': false,
+        });
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Failed to notify Android: $e');
+        }
+      }
+      return;
+    }
+    
+    try {
       // 위젯 관리 화면을 선택 모드로 열기
       final result = await Navigator.of(context).push<WidgetConfig>(
         MaterialPageRoute(
@@ -133,6 +160,21 @@ class _MyAppState extends State<MyApp> {
           if (kDebugMode) {
             debugPrint('Failed to notify Android: $e');
           }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error in widget configuration: $e');
+      }
+      // Notify Android about the error
+      try {
+        await platform.invokeMethod('widgetConfigured', {
+          'widgetId': widgetId,
+          'success': false,
+        });
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Failed to notify Android: $e');
         }
       }
     }

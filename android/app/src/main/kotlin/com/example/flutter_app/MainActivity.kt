@@ -63,9 +63,12 @@ class MainActivity : FlutterActivity() {
         super.onResume()
         
         // Handle pending intent when activity resumes and Flutter is ready
-        pendingIntent?.let {
-            handleIntent(it)
-            pendingIntent = null
+        // Add delay to ensure Flutter UI is fully initialized
+        pendingIntent?.let { intent ->
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                handleIntent(intent)
+                pendingIntent = null
+            }, 1000) // 1 second delay
         }
     }
 
